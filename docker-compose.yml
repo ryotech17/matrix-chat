@@ -1,43 +1,13 @@
-version: "3.8"
-
-services:
-  synapse:
-    image: matrixdotorg/synapse:latest
-    container_name: synapse
-    environment:
-      - SYNAPSE_SERVER_NAME=matrix.koyeb.app
-      - SYNAPSE_REPORT_STATS=yes
-      - SYNAPSE_NO_TLS=true
-      - UID=991
-      - GID=991
-    volumes:
-      - ./synapse-data:/data
-    command: >
-      bash -c "
-      if [ ! -f /data/homeserver.yaml ]; then
-        python -m synapse.app.homeserver \
-          --server-name matrix.koyeb.app \
-          --config-path /data/homeserver.yaml \
-          --generate-config \
-          --report-stats yes;
-      fi;
-      exec python -m synapse.app.homeserver --config-path /data/homeserver.yaml
-      "
-    ports:
-      - "8008:8008"
-    restart: always
-
-  element:
-    image: vectorim/element-web:latest
-    container_name: element
-    environment:
-      - REACT_APP_DEFAULT_SERVER=https://matrix.koyeb.app
-      - REACT_APP_DEFAULT_HS_URL=http://synapse:8008
-    depends_on:
-      - synapse
-    ports:
-      - "80:80"
-    restart: always
-
-volumes:
-  synapse-data:
+server_name: matrix.koyeb.app
+pid_file: /data/homeserver.pid
+listeners:
+  - port: 8008
+    type: http
+    tls: false
+    resources:
+      - names: [client, federation]
+database:
+  name: sqlite3
+  args:
+    database: /data/homeserver.db
+report_stats: yes
